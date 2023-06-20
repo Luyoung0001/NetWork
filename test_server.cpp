@@ -156,5 +156,10 @@ int main() {
     // Server 端的监听地址
     auto test = TestInit("0.0.0.0:1234");
     // Put your code Here!
+    // 创建 socket
+    // 绑定
+    // 监听
+    // 获得数据
+    // 发送验证
     
 }

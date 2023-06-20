@@ -245,7 +245,27 @@ class mess {
 
 int main() {
     // Server 端的监听地址
-    auto msg = InitTestClient("192.168.30.170:1234");
+    auto msg = InitTestClient("127.0.0.1");
     // Put your code Here!
+    
+    // 创建socket
+    nt sockfd = socket(AF_INET, SOCK_RAW, 0);
+    
+    struct sockaddr_in server_addr;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(8080);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    
+    // 连接服务器
+    if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == 0) {
+        printf("成功与服务器建立连接\n");
+    } else {
+        perror("连接失败");
+    }
+    
+    // 获得数据
+    // 对数据进行切片
+    // 发送数据
+
     
 }
