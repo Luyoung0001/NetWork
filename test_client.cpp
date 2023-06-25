@@ -62,7 +62,7 @@ class ClientTester {
             runtime_error("Test Error,Please Retry!\n");
         if (response.reason() >= ErrorLevel)
             throw std::runtime_error(
-                    ErrorCode2Msg(static_cast<TestStatus>(response.reason())));
+                ErrorCode2Msg(static_cast<TestStatus>(response.reason())));
         if (response.reason() == Success)
             SuccessMaxIdx = std::max(SuccessMaxIdx, response.id());
     }
@@ -77,7 +77,7 @@ class ClientTester {
             runtime_error("Test Error,Please Retry!\n");
         if (response.reason() >= ErrorLevel)
             throw std::runtime_error(
-                    ErrorCode2Msg(static_cast<TestStatus>(response.reason())));
+                ErrorCode2Msg(static_cast<TestStatus>(response.reason())));
         if (response.reason() == Success)
             SuccessMaxIdx = std::max(SuccessMaxIdx, response.id());
     }
@@ -85,18 +85,18 @@ class ClientTester {
     uint32_t SuccessMaxIdx = -1;
     static const char *ErrorCode2Msg(TestStatus s) noexcept {
         switch (s) {
-            case Success:
-                return "Success";
-            case Wait:
-                return "Wait For Msg";
-            case WaitRPC:
-                return "Wait For Test";
-            case Diff:
-                return "Msg is Error";
-            case Unknow:
-                return "Unknow Error";
-            case ErrorLevel:
-            case TestError:;
+        case Success:
+            return "Success";
+        case Wait:
+            return "Wait For Msg";
+        case WaitRPC:
+            return "Wait For Test";
+        case Diff:
+            return "Msg is Error";
+        case Unknow:
+            return "Unknow Error";
+        case ErrorLevel:
+        case TestError:;
         }
         return "Tester is Error";
     }
@@ -109,8 +109,8 @@ class ClientTester {
             return Success;
         std::this_thread::sleep_for(3s);
         return (response.id() == SendSeq && response.reason() == Success)
-                       ? Success
-                       : static_cast<TestStatus>(response.reason());
+                   ? Success
+                   : static_cast<TestStatus>(response.reason());
     }
 
     void genAsciiMsg(uint64_t size) {
@@ -142,13 +142,13 @@ class ClientTester {
         return seed;
     }
 
-public:
+  public:
     ClientTester(std::string addr)
         : stub(NT::NewStub(
-                  grpc::CreateChannel(addr, grpc::InsecureChannelCredentials()))),
+              grpc::CreateChannel(addr, grpc::InsecureChannelCredentials()))),
           re(getSeed()), msgs(std::make_shared<MsgBuf>()),
-          AsciiStringGenerator(' ', '~'), BinStringGenerator(CHAR_MIN, CHAR_MAX),
-          LenGenerator(0, 4096) {}
+          AsciiStringGenerator(' ', '~'),
+          BinStringGenerator(CHAR_MIN, CHAR_MAX), LenGenerator(0, 4096) {}
     std::shared_ptr<MsgBuf> msgs;
     void FinishCheck() {
         auto res = Check();
@@ -244,28 +244,41 @@ class mess {
 };
 
 int main() {
+
     // Server 端的监听地址
-    auto msg = InitTestClient("127.0.0.1");
+    auto msg = InitTestClient("127.0.0.1:1234");
     // Put your code Here!
-    
-    // 创建socket
-    nt sockfd = socket(AF_INET, SOCK_RAW, 0);
-    
+
+    // 创建 socket
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(sockfd == -1){
+      
+    }
+
+    // 初始化 addr
     struct sockaddr_in server_addr;
+
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(8080);
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    
-    // 连接服务器
-    if (connect(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr)) == 0) {
+
+    // 连接 server
+    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) ==
+        0) {
         printf("成功与服务器建立连接\n");
     } else {
         perror("连接失败");
     }
-    
-    // 获得数据
-    // 对数据进行切片
-    // 发送数据
+    // 循环测试:
+    while (1) {
+        // 获得数据
+        auto str = msg->pop();
+        sendto()
 
-    
+
+
+        // 对数据进行切片
+        // 发送数据
+    }
 }
