@@ -245,11 +245,11 @@ class mess {
 
 int main() {
     // Server 端的监听地址
-    auto msg = InitTestClient("127.0.0.1");
+    auto msg = InitTestClient("127.0.0.1:1234");
     // Put your code Here!
     
     // 创建socket
-    nt sockfd = socket(AF_INET, SOCK_RAW, 0);
+    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
@@ -262,7 +262,8 @@ int main() {
     } else {
         perror("连接失败");
     }
-    
+
+
     // 获得数据
     // 对数据进行切片
     // 发送数据
