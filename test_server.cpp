@@ -22,6 +22,7 @@
 #include <string>
 #include <sys/socket.h>
 #include <thread>
+#include <unistd.h>
 #include <unordered_map>
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -118,7 +119,7 @@ class NetworkTestServer final : public NetworkTest::NT::Service {
         return Status::OK;
     }
 
-public:
+  public:
     void commit(std::string &&msg) {
         std::lock_guard<std::mutex> lk(mtx);
         if (status != Success) {
@@ -148,18 +149,66 @@ std::shared_ptr<NetworkTestServer> TestInit(std::string addr) {
     return tester;
 }
 class mess {
-public:
+  public:
     int partid;
     int len;
 };
 int main() {
+#define MAX_SIZE 4096 * 4
+
+    char buffer[MAX_SIZE];
     // Server 端的监听地址
     auto test = TestInit("0.0.0.0:1234");
     // Put your code Here!
+
     // 创建 socket
-    // 绑定
+    int sock_id = socket(AF_INET, SOCK_STREAM, 0);
+    int connection_id = 0;
+    if (sock_id == -1) {
+        perror("socket");
+        exit(EXIT_FAILURE);
+    }
+
+    // 初始化 addr
+    struct sockaddr_in addr;
+    int addrlen = sizeof(addr);
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, "127.0.0.1", &(addr.sin_addr)) <= 0) {
+        printf("Error for addr!\n");
+        return -1;
+    }
+    // 绑定 socket
+    if (bind(sock_id, (struct sockaddr *)&addr, sizeof(sockaddr_in)) == -1) {
+        printf("Error for Bind!\n");
+        return 0;
+    }
+
     // 监听
-    // 获得数据
-    // 发送验证
-    
+
+    if (listen(sock_id, 5) == -1) {
+        printf("Error for Listening!\n");
+        return 0;
+    }
+
+    if ((connection_id = accept(sock_id, (struct sockaddr *)&addr),
+         (__darwin_socklen_t *)&addrlen) < 0) {
+        printf("Accept Error!\n");
+        return 0;
+    }
+    // 循环响应数据
+    while (1) {
+        memset(buffer, '\0', 4096 * 4);
+        int n = recv(connection_id, buffer, sizeof(buffer), 0);
+        if (n <= 0) {
+            break; // 退出循环
+        }
+        std::cout << "recv from client" << buffer << std::endl;
+
+        test->commit(std::move(str_test));
+    }
+    close(sock_id);
+    close(connection_id);
+    return 0;
 }

@@ -39,6 +39,6 @@ enum TestStatus : uint32_t {
     Diff,
     Unknow
 };
-constexpr int PORT = 40001;
+constexpr int PORT = 8888; // 服务端口号
 #define ServerAddr "10.30.0.170"
 #endif

@@ -246,39 +246,44 @@ class mess {
 int main() {
 
     // Server 端的监听地址
-    auto msg = InitTestClient("127.0.0.1:1234");
+    auto msg = InitTestClient("0.0.0.0:1234");
     // Put your code Here!
 
     // 创建 socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(sockfd == -1){
-      
+    int sock_id = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock_id == -1) {
+        perror("socket");
+        exit(EXIT_FAILURE);
     }
 
     // 初始化 addr
-    struct sockaddr_in server_addr;
+    struct sockaddr_in addr;
 
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(8080);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    // 连接 server
-    if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) ==
-        0) {
-        printf("成功与服务器建立连接\n");
-    } else {
-        perror("连接失败");
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(PORT);
+    if (inet_pton(AF_INET, "127.0.0.1", &(addr.sin_addr)) <= 0) {
+        printf("Error for addr!\n");
+        return -1;
     }
-    // 循环测试:
+
+    if (connect(sock_id, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        printf("Error for Connection!\n");
+        return -1;
+    }
+    printf("*****************Begin to Send Info***************\n");
+
+    // 循环接收和发送
     while (1) {
-        // 获得数据
+        // get data
         auto str = msg->pop();
-        sendto()
 
-
-
-        // 对数据进行切片
-        // 发送数据
+        // send to
+        if (send(sock_id, str.c_str(), str.length(), 0) < 0) {
+            perror("sendto");
+            exit(EXIT_FAILURE);
+        }
+        std::cout << "Send msg:" << str << std::endl;
     }
+    printf("Over!\n");
+    close(sock_id);
 }
