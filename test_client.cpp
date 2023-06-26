@@ -243,12 +243,45 @@ class mess {
     int len;
 };
 
+int writen(int fd, const char *msg, int size) {
+    const char *buf = msg;
+    int count = size;
+    while (count > 0) {
+        int len = send(fd, buf, count, 0);
+        if (len == -1) {
+            close(fd);
+            return -1;
+        } else if (len == 0) {
+            continue;
+        }
+        buf += len;
+        count -= len;
+    }
+    return size;
+}
+int sendMsg(int cfd, char *msg, int len) {
+    if (msg == NULL || len <= 0 || cfd <= 0) {
+        return -1;
+    }
+    // 申请内存空间: 数据长度 + 包头4字节(存储数据长度)
+    char *data = (char *)malloc(len + 4);
+    // 对数据头进行处理
+    int bigLen = htonl(len);
+    memcpy(data, &bigLen, 4);
+    memcpy(data + 4, msg, len);
+    // 发送数据
+    int ret = writen(cfd, data, len + 4);
+    // 释放内存
+    free(data);
+    // 返回返回值
+    return ret;
+}
+
 int main() {
 
-    // Server 端的监听地址
-    auto msg = InitTestClient("0.0.0.0:1234");
+    auto msg = InitTestClient("192.168.30.170:1234");
     // Put your code Here!
-
+    auto str = msg->pop();
     // 创建 socket
     int sock_id = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_id == -1) {
@@ -258,32 +291,39 @@ int main() {
 
     // 初始化 addr
     struct sockaddr_in addr;
+    int addrlen = sizeof(addr);
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
+    addr.sin_port = htons(8888);
     if (inet_pton(AF_INET, "127.0.0.1", &(addr.sin_addr)) <= 0) {
-        printf("Error for addr!\n");
+        printf("Error for Addr!\n");
         return -1;
     }
 
+    // 连接服务器
     if (connect(sock_id, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         printf("Error for Connection!\n");
-        return -1;
+        exit(1);
     }
     printf("*****************Begin to Send Info***************\n");
 
+    int len = 0;
     // 循环接收和发送
-    while (1) {
-        // get data
-        auto str = msg->pop();
+    while (msg) {
+        // usleep(30000);
+        // 发送数据
+        // int status = send(sock_id, str.c_str(), str.length(), 0); 
+        len = str.length();
+        int ret = sendMsg(sock_id, str, len);
 
-        // send to
-        if (send(sock_id, str.c_str(), str.length(), 0) < 0) {
-            perror("sendto");
-            exit(EXIT_FAILURE);
+        if (ret < 0) {
+            printf("Error for Sending!\n");
+            exit(0);
         }
         std::cout << "Send msg:" << str << std::endl;
+        str = msg->pop();
     }
     printf("Over!\n");
     close(sock_id);
+    return 0;
 }

@@ -153,11 +153,49 @@ class mess {
     int partid;
     int len;
 };
-int main() {
-#define MAX_SIZE 4096 * 4
 
-    char buffer[MAX_SIZE];
-    // Server 端的监听地址
+int readn(int fd, char *buf, int size) {
+    char *pt = buf;
+    int count = size;
+    while (count > 0) {
+        int len = recv(fd, pt, count, 0);
+        // 服务端打印数据
+        printf("%s\n",pt);
+
+        if (len == -1) {
+            return -1;
+        } else if (len == 0) {
+            return size - count;
+        }
+        pt += len;
+        count -= len;
+    }
+    return size;
+}
+int recvMsg(int cfd, char **msg) {
+    // 接收数据
+    // 1. 读数据头
+    int len = 0;
+    readn(cfd, (char *)&len, 4);
+    len = ntohl(len);
+    printf("数据块大小: %d\n", len);
+
+    // 根据读出的长度分配内存，+1 -> 这个字节存储\0
+    char *buf = (char *)malloc(len + 1);
+    int ret = readn(cfd, buf, len);
+    if (ret != len) {
+        close(cfd);
+        free(buf);
+        return -1;
+    }
+    buf[len] = '\0';
+    *msg = buf;
+
+    return ret;
+}
+int main() {
+    // 堆区定义二重指针
+    char **buffer = (char **)malloc(char *);
     auto test = TestInit("0.0.0.0:1234");
     // Put your code Here!
 
@@ -174,39 +212,46 @@ int main() {
     int addrlen = sizeof(addr);
 
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(PORT);
-    if (inet_pton(AF_INET, "127.0.0.1", &(addr.sin_addr)) <= 0) {
-        printf("Error for addr!\n");
-        return -1;
-    }
+    addr.sin_port = htons(8888);
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
     // 绑定 socket
-    if (bind(sock_id, (struct sockaddr *)&addr, sizeof(sockaddr_in)) == -1) {
+    if (bind(sock_id, (struct sockaddr *)&addr, sizeof(struct sockaddr_in)) ==
+        -1) {
         printf("Error for Bind!\n");
         return 0;
     }
 
-    // 监听
-
-    if (listen(sock_id, 5) == -1) {
+    // 阻塞监听
+    if (listen(sock_id, 10) == -1) {
         printf("Error for Listening!\n");
-        return 0;
+        exit(1);
     }
 
-    if ((connection_id = accept(sock_id, (struct sockaddr *)&addr),
-         (__darwin_socklen_t *)&addrlen) < 0) {
+    if ((connection_id = accept(sock_id, (struct sockaddr *)&addr,
+                                (socklen_t *)&addrlen)) < 0) {
         printf("Accept Error!\n");
-        return 0;
+        exit(1);
     }
+    char buffer1[4096] = {0};
     // 循环响应数据
     while (1) {
-        memset(buffer, '\0', 4096 * 4);
-        int n = recv(connection_id, buffer, sizeof(buffer), 0);
-        if (n <= 0) {
-            break; // 退出循环
+        // 接收数据
+        // if(recv(connection_id, buffer, sizeof(buffer), 0)<= 0){
+        //     break; // 退出循环
+        // }
+        int ret = recvMsg(connection_id, buffer);
+        if (ret == -1) {
+            printf("recvMsg Error!\n");
+            exit(1);
+        } else if (ret == 0) {
+            break;
         }
-        std::cout << "recv from client" << buffer << std::endl;
 
-        test->commit(std::move(str_test));
+        // std::cout << "Recv from Client:" << buffer << std::endl;
+        // 取出buffer放入数组中
+        //std::string str_test(buffer1, 4096);
+        // test->commit(std::move(str_test));
     }
     close(sock_id);
     close(connection_id);
