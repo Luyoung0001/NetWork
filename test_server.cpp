@@ -195,7 +195,7 @@ int recvMsg(int cfd, char **msg) {
 }
 int main() {
     // 堆区定义二重指针
-    char **buffer = (char **)malloc(char *);
+    char *buffer;
     auto test = TestInit("0.0.0.0:1234");
     // Put your code Here!
 
@@ -233,25 +233,25 @@ int main() {
         printf("Accept Error!\n");
         exit(1);
     }
-    char buffer1[4096] = {0};
     // 循环响应数据
     while (1) {
         // 接收数据
         // if(recv(connection_id, buffer, sizeof(buffer), 0)<= 0){
         //     break; // 退出循环
         // }
-        int ret = recvMsg(connection_id, buffer);
+        int ret = recvMsg(connection_id, &buffer);
         if (ret == -1) {
             printf("recvMsg Error!\n");
             exit(1);
         } else if (ret == 0) {
             break;
         }
+        printf("%s\n",buffer);
 
         // std::cout << "Recv from Client:" << buffer << std::endl;
         // 取出buffer放入数组中
-        //std::string str_test(buffer1, 4096);
-        // test->commit(std::move(str_test));
+        std::string str_test(*buffer);
+        test->commit(std::move(str_test));
     }
     close(sock_id);
     close(connection_id);
